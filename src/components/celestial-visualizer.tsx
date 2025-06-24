@@ -5,6 +5,7 @@ import {
   Card,
   CardContent,
   CardDescription,
+  CardFooter,
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
@@ -12,8 +13,9 @@ import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import { Pause, Play, RotateCw, CalendarDays, Zap, Orbit } from 'lucide-react';
+import { Pause, Play, RotateCw, CalendarDays, Zap, Orbit, Info } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
 // Constants for simulation
 const ORBIT_RX = 250;
@@ -93,6 +95,18 @@ export default function CelestialVisualizer() {
   const nightPathAngle = Math.atan2(earthY, earthX) * (180 / Math.PI);
 
   const nightPath = `M ${-EARTH_RADIUS},0 A ${EARTH_RADIUS},${EARTH_RADIUS} 0 0 1 ${EARTH_RADIUS},0 Z`;
+
+  const orbitalEccentricity = useMemo(() => Math.sqrt(1 - Math.pow(ORBIT_RY / ORBIT_RX, 2)), []);
+
+  const distanceFromSun = useMemo(() => {
+    const distanceInPixels = (ORBIT_RX * ORBIT_RY) / Math.sqrt(
+        Math.pow(ORBIT_RY * Math.cos(earthOrbitalAngle), 2) +
+        Math.pow(ORBIT_RX * Math.sin(earthOrbitalAngle), 2)
+    );
+    // Normalize to AU, where semi-major axis (ORBIT_RX) is ~1 AU
+    return distanceInPixels / ORBIT_RX;
+  }, [earthOrbitalAngle]);
+
 
   return (
     <Card className="w-full max-w-6xl mx-auto shadow-2xl shadow-primary/10 overflow-hidden border-2 border-primary/20">
@@ -195,6 +209,75 @@ export default function CelestialVisualizer() {
 
         </div>
       </CardContent>
+      <CardFooter className="flex-col items-start gap-4 p-4 sm:p-6 border-t-2 border-primary/10 bg-card-foreground/5">
+        <h3 className="text-xl font-bold text-accent font-headline tracking-wide flex items-center gap-2">
+          <Info size={22} />
+          Astronomical & Mathematical Details
+        </h3>
+        <Accordion type="single" collapsible className="w-full">
+          <AccordionItem value="item-1">
+            <AccordionTrigger className="hover:no-underline">Key Parameters & Constants</AccordionTrigger>
+            <AccordionContent>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 text-sm p-2">
+                  <div className="p-3 rounded-lg bg-background/50">
+                      <p className="font-semibold text-accent/80">Axial Tilt</p>
+                      <p className="font-mono text-base">{AXIAL_TILT.toFixed(1)}°</p>
+                  </div>
+                  <div className="p-3 rounded-lg bg-background/50">
+                      <p className="font-semibold text-accent/80">Orbital Period</p>
+                      <p className="font-mono text-base">{DAYS_IN_YEAR} days</p>
+                  </div>
+                   <div className="p-3 rounded-lg bg-background/50">
+                      <p className="font-semibold text-accent/80">Orbital Eccentricity (e)</p>
+                      <p className="font-mono text-base">{orbitalEccentricity.toFixed(4)}</p>
+                  </div>
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+          <AccordionItem value="item-2">
+            <AccordionTrigger className="hover:no-underline">Live Simulation Data</AccordionTrigger>
+             <AccordionContent>
+              <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-sm p-2">
+                  <div className="p-3 rounded-lg bg-background/50">
+                      <p className="font-semibold text-accent/80">Day of Year</p>
+                      <p className="font-mono text-base">{dayOfYear.toFixed(2)}</p>
+                  </div>
+                  <div className="p-3 rounded-lg bg-background/50">
+                      <p className="font-semibold text-accent/80">Orbital Angle</p>
+                      <p className="font-mono text-base">{(earthOrbitalAngle * 180 / Math.PI).toFixed(2)}°</p>
+                  </div>
+                   <div className="p-3 rounded-lg bg-background/50">
+                      <p className="font-semibold text-accent/80">Distance from Sun</p>
+                      <p className="font-mono text-base">{distanceFromSun.toFixed(4)} AU</p>
+                  </div>
+                   <div className="p-3 rounded-lg bg-background/50">
+                      <p className="font-semibold text-accent/80">Earth's Rotation</p>
+                      <p className="font-mono text-base">{earthRotationAngle.toFixed(2)}°</p>
+                  </div>
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+          <AccordionItem value="item-3">
+            <AccordionTrigger className="hover:no-underline">Kepler's Laws of Planetary Motion</AccordionTrigger>
+            <AccordionContent>
+              <div className="space-y-4 text-sm text-foreground/80 p-2">
+                <div>
+                  <h4 className="font-semibold text-foreground">1. The Law of Ellipses</h4>
+                  <p className="mt-1">The orbit of a planet is an ellipse with the Sun at one of the two foci. This simulation models Earth's orbit as a static ellipse.</p>
+                </div>
+                <div>
+                  <h4 className="font-semibold text-foreground">2. The Law of Equal Areas</h4>
+                  <p className="mt-1">A line segment joining a planet and the Sun sweeps out equal areas during equal intervals of time. For simplicity, this simulation uses a constant angular speed. In reality, Earth moves fastest when closest to the Sun (perihelion) and slowest when farthest away (aphelion).</p>
+                </div>
+                <div>
+                  <h4 className="font-semibold text-foreground">3. The Law of Harmonies</h4>
+                  <p className="mt-1">The square of the orbital period (T) of a planet is directly proportional to the cube of the semi-major axis (a) of its orbit (T² ∝ a³). This law relates the orbital periods and distances of planets in the solar system.</p>
+                </div>
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
+      </CardFooter>
     </Card>
   );
 }
